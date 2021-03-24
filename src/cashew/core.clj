@@ -297,6 +297,21 @@
                                            :at (dispatch a)
                                            :bt (dispatch b)}))))
 
+(defmethod quot&rem [::* ::any] [a b]
+  (cond (= a b)
+        [1 0]
+
+        (some #{b} (next a))
+        [(let [[bs as] (moses #{b} (next a))]
+           (apply mult (concat (next bs) as)))
+         0]
+
+        :else
+        (throw (ex-info "Unexpected division" {:a a :b b
+                                               :at (dispatch a)
+                                               :bt (dispatch b)}))))
+
+
 ;; util methods
 ;; 
 

@@ -42,3 +42,10 @@
     (is (= [(coeffs->polynomial ['a +1]) 0]
            (quot&rem (coeffs->polynomial [(mult 'a 'a) 0 -1])
                      (coeffs->polynomial ['a -1]))))))
+
+#_
+(deftest failing
+  (println "> "
+           (quot&rem (coeffs->polynomial [(mult 'a 'b) 0 -1])
+                     (coeffs->polynomial ['a -1]))))
+
