@@ -69,7 +69,10 @@
        (factors->polynomial)))
 
 (defmethod mult' [Polynomial ::c/number] [p n]
-  (factors->polynomial (map (partial mult n) (.factors p))))
+  (->> (.factors p)
+       (map (partial mult n))
+       (map canonize)
+       (factors->polynomial)))
 
 ;; commutative
 (defmethod mult' [::c/number Polynomial] [n p] (mult' p n))

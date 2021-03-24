@@ -1,6 +1,6 @@
 (ns cashew.core)
 
-(declare cartesian plus plus? minus pow mult mult?)
+(declare cartesian plus plus? minus pow pow? mult mult?)
 
 (def third (comp first next next))
 
@@ -71,30 +71,42 @@
                    :else (update m term (fnil inc 0))))
            (array-map) terms)
    (keep (fn [[term count]]
-           (cond (= 1 count) term
-                 (< 1 count) (mult count term))))
+           (cond (= 1 count)    term
+                 (not= 0 count) (mult count term))))
    ((fn [xs] (case (count xs)
                0 0
                1 (first xs)
                (cons '+ xs))))))
 
+(defmethod canonize ::* [[_ & terms]]
+  (->>
+   (reduce (fn [m term]
+             (if (and (pow? term) (= 3 (count term)) (number? (third term)))
+               (update m (second term) (fnil + 0) (third term))
+               (update m term (fnil inc 0))))
+           (array-map) terms)
+   (keep (fn [[term count]]
+           (cond (= 1 count)    term
+                 (not= 0 count) (pow term count))))
+   ((fn [xs] (case (count xs)
+               0 1
+               1 (first xs)
+               (cons '* xs))))))
+
 ; (prefer-method canonize ::plus ::any)
 
 (defmulti plus' (comp (wrap-dispatch plus') (partial mapv dispatch) list))
 
-(defn plus [x & xs]
-  (let [result (reduce plus' x xs)]
-    (if (plus? result)
-      result
-;      (plus-simplify result)
-      result)))
+(defn plus [x & xs] (reduce plus' x xs))
 
 (defmethod plus' [::number ::number] [a b] (+ a b))
 
 (defmethod plus' [::any ::zero] [x _] x)
 (defmethod plus' [::zero ::any] [_ x] x)
 (defmethod plus' :default [a b]
-  (list '+ a b))
+  (if (= a b)
+    (mult 2 a)
+    (list '+ a b)))
 
 ;; must be preferred:
 (defmethod plus' [::any ::+] [a [_ & terms]]
@@ -108,7 +120,7 @@
 
 ;; multiplication
 
-(defn mult? [x] (and (seq? x) (= '* (first x))))
+(def mult? (comp #{::*} dispatch))
 
 (defmulti mult' (comp (wrap-dispatch mult') (partial mapv dispatch) list))
 (defn mult [x & xs] (reduce mult' x xs))
@@ -121,7 +133,10 @@
 (defmethod mult' [::one ::any] [_ x] x)
 
 ; (defmethod mult' [::any ::any] [a b] (list '* a b))
-(defmethod mult' :default [a b] (list '* a b))
+(defmethod mult' :default [a b]
+  (if (= a b)
+    (pow a 2)
+    (list '* a b)))
 
 (defmethod mult' [::any ::*] [a [_ & factors]] (apply mult a factors))
 
@@ -154,7 +169,8 @@
 
 ;; --- power
 ;; 
-(defn pow [x] (and (seq? x) (= 'pow (first x))))
+
+(def pow? (comp #{::pow} dispatch))
 
 (defmulti pow' (comp (wrap-dispatch pow') (partial mapv dispatch) list))
 (defn pow [x & xs] (reduce pow' x xs))
@@ -259,7 +275,12 @@
   [a 0])
 
 (defmethod quot&rem [::any ::zero] [_ _]
-  (throw (ex-info "Division  by zero!" {})))
+  (throw (ex-info "Division by zero!" {})))
+
+(defmethod quot&rem [::pow ::any] [[_ base p] other]
+  (if (= base other)
+    (pow base (minus p 1))
+    (throw (ex-info "Can not reduce unexpected power" {:pow [base p] :divisor other}))))
 
 (defmethod quot&rem [::any ::any] [a b]
   (if (= a b)

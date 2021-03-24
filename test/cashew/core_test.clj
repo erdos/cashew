@@ -52,6 +52,7 @@
     (is (= '(* 3 x y (+ 2 3))
            (reorder '(* (+ 3 2) x 3 y))))))
 
+
 (deftest test-expand
   (is (= 'a (expand 'a)))
   (is (= '(+ a b c) (expand '(+ a b c))))
@@ -64,9 +65,18 @@
   (testing "Addition"
     (is (= '(+ a b c) (canonize '(+ a b c))))
     (is (= '(* 4 a) (canonize '(+ a (* 3 a)))))
+    (is (= '(* 2 a) (canonize '(+ a a))))
+    (is (= '(* -2 a) (canonize '(+ (* -3 a) a))))
     (is (= '(+ (* 4 a) b) (canonize '(+ a (* 2 a) b a))))
     (is (= '0 (canonize '(+ a (* -1 a)))))
-    (is (= 'b (canonize '(+ a b (* -1 a)))))))
+    (is (= 'b (canonize '(+ a b (* -1 a))))))
+  
+  (testing  "Multiplication"
+    (is (= '(* a b c) (canonize '(* a b c))))
+    (is (= '(pow a 4) (canonize '(* a (pow a 3)))))
+    (is (= '(pow a 2) (canonize '(* a a))))
+    (is (= '1 (canonize '(* a (pow a -1)))))
+    (is (= 'b (canonize '(* a b (pow a -1)))))))
 
 
 (deftest test-taylor

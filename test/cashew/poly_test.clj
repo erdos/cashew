@@ -41,7 +41,7 @@
 
 
 ;; should give a+1
- #_
+#_
 (deftest test-polynomial-division
   (println "------")
   (quot&rem (factors->polynomial [(mult 'a 'a) 0 -1])
