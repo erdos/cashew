@@ -1,7 +1,7 @@
 (ns cashew.poly
   (:require [cashew.core :as c :refer :all]))
 
-(declare factors->polynomial lead divide)
+(declare coeffs->polynomial lead divide)
 
 (deftype Polynomial [factors variable]
   clojure.lang.Seqable
@@ -27,7 +27,7 @@
 
 ;; leading term. should give back variable as well
 (defn lead [p]
-  (factors->polynomial
+  (coeffs->polynomial
    (cons (first (.factors p))
          (repeat (degree p) 0)))
   #_(apply mult
@@ -37,7 +37,7 @@
 ;; 
 (defn divide-lead [p q]
   (let [[main _] (quot&rem (first (.factors p)) (first (.factors q)))]
-    (factors->polynomial (cons main (repeat (- (degree p) (degree q)) 0)))))
+    (coeffs->polynomial (cons main (repeat (- (degree p) (degree q)) 0)))))
 
 (defmethod quot&rem [Polynomial Polynomial] [n d]
   (loop [q 0
@@ -51,7 +51,7 @@
       [q r])))
 
 ;; [3 4 1] -> 3x2 + 4x + 1
-(defn factors->polynomial [factors]
+(defn coeffs->polynomial [factors]
 ;  (assert (not-empty factors))
   (assert (not= 0 (first factors)))
   (if (empty? factors)
@@ -66,13 +66,13 @@
             (concat (repeat (- (degree p) (degree q)) 0) (.factors q)))
        (map canonize)
        (drop-while #{0})
-       (factors->polynomial)))
+       (coeffs->polynomial)))
 
 (defmethod mult' [Polynomial ::c/number] [p n]
   (->> (.factors p)
        (map (partial mult n))
        (map canonize)
-       (factors->polynomial)))
+       (coeffs->polynomial)))
 
 ;; commutative
 (defmethod mult' [::c/number Polynomial] [n p] (mult' p n))
@@ -80,7 +80,7 @@
 ;; factors helyett coeffs!!
 
 (defmethod mult' [Polynomial Polynomial] [p q]
-  (factors->polynomial
+  (coeffs->polynomial
    (reduce (fn [v [idx value]] (update v idx plus value))
            (vec (repeat (+ 1 (degree p) (degree q)) 0))
            (for [[idx1 fac1] (map-indexed vector (.factors p))
