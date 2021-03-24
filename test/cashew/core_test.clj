@@ -68,7 +68,11 @@
     (is (= '(* 2 a) (canonize '(+ a a))))
     (is (= '(* -2 a) (canonize '(+ (* -3 a) a))))
     (is (= '(+ (* 4 a) b) (canonize '(+ a (* 2 a) b a))))
-    (is (= '0 (canonize '(+ a (* -1 a)))))
+
+    (testing "Zeroes out"
+      (is (= '0 (canonize '(+ a (* -1 a)))))
+      (is (= '0 (canonize '(+ (* a b) (* -1 b a))))))
+
     (is (= 'b (canonize '(+ a b (* -1 a))))))
   
   (testing  "Multiplication"

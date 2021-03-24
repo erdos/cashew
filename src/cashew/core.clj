@@ -1,6 +1,6 @@
 (ns cashew.core)
 
-(declare cartesian plus plus? minus pow pow? mult mult?)
+(declare cartesian plus plus? minus pow pow? mult mult' mult?)
 
 (def third (comp first next next))
 
@@ -64,11 +64,12 @@
 (defmethod canonize ::+ [[_ & terms]]
   (->>
    (reduce (fn [m term]
-             (cond (and (mult? term) (= 3 (count term)) (number? (second term)))
-                   (update m (third term) (fnil + 0) (second term))
-                   (and (mult? term) (= 3 (count term)) (number? (third term)))
-                   (update m (second term) (fnil + 0) (third term))
-                   :else (update m term (fnil inc 0))))
+             (if (and (mult? term) (some number? term))
+               (update m
+                       (reduce mult' (sort (remove number? (next term))))
+                       (fnil + 0)
+                       (reduce * (filter number? term)))
+               (update m term (fnil inc 0))))
            (array-map) terms)
    (keep (fn [[term count]]
            (cond (= 1 count)    term
@@ -293,9 +294,13 @@
 (defmethod quot&rem [::any ::any] [a b]
   (if (= a b)
     [1 0]
-    (throw (ex-info "Unexpected division" {:a a :b b
-                                           :at (dispatch a)
-                                           :bt (dispatch b)}))))
+    [(list ::quot a b) (list ::rem a b)]
+    #_(throw (ex-info "Unexpected division" {:a a :b b
+                                             :at (dispatch a)
+                                             :bt (dispatch b)}))))
+
+(derive ::quot ::any)
+(derive ::rem ::any)
 
 (defmethod quot&rem [::* ::any] [a b]
   (cond (= a b)
