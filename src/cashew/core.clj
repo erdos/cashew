@@ -64,9 +64,9 @@
 (defmethod canonize ::+ [[_ & terms]]
   (->>
    (reduce (fn [m term]
-             (if (and (mult? term) (some number? term))
+             (if (mult? term)
                (update m
-                       (reduce mult' (sort (remove number? (next term))))
+                       (reduce mult' (sort-by hash (remove number? (next term))))
                        (fnil + 0)
                        (reduce * (filter number? term)))
                (update m term (fnil inc 0))))
@@ -294,10 +294,10 @@
 (defmethod quot&rem [::any ::any] [a b]
   (if (= a b)
     [1 0]
-    [(list ::quot a b) (list ::rem a b)]
-    #_(throw (ex-info "Unexpected division" {:a a :b b
-                                             :at (dispatch a)
-                                             :bt (dispatch b)}))))
+    ;; [(list ::quot a b) (list ::rem a b)]
+    (throw (ex-info "Unexpected division" {:a a :b b
+                                           :at (dispatch a)
+                                           :bt (dispatch b)}))))
 
 (derive ::quot ::any)
 (derive ::rem ::any)
