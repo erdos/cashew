@@ -37,12 +37,8 @@
     (is (= [(factors->polynomial [1 -1]) 0] ;; x - 1
            (quot&rem (factors->polynomial [1 0 -1]) ;; x^2 - 1
                      (factors->polynomial [1 1])))) ;; x + 1
-    ))
-
-
-;; should give a+1
-#_
-(deftest test-polynomial-division
-  (println "------")
-  (quot&rem (factors->polynomial [(mult 'a 'a) 0 -1])
-            (factors->polynomial ['a -1])))
+    
+    ;; parametric
+    (is (= [(factors->polynomial ['a +1]) 0]
+           (quot&rem (factors->polynomial [(mult 'a 'a) 0 -1])
+                     (factors->polynomial ['a -1]))))))

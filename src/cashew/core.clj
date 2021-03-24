@@ -132,8 +132,7 @@
 (defmethod mult' [::any ::one] [x _] x)
 (defmethod mult' [::one ::any] [_ x] x)
 
-; (defmethod mult' [::any ::any] [a b] (list '* a b))
-(defmethod mult' :default [a b]
+(defmethod mult' [::any ::any] [a b]
   (if (= a b)
     (pow a 2)
     (list '* a b)))
@@ -152,14 +151,20 @@
        (when (not-empty ps)
        ;; 
          ))
-   (let [[ps others] (moses (fn [f] (= f b)) factors)]
+   
+   ;; todo maybe keep it?
+   #_(let [[ps others] (moses (fn [f] (= f b)) factors)]
      (when (not-empty ps)
        (mult (pow b (inc (count others))) others)))
    (list* '* (concat factors [b]))))
 
 (defmethod mult' [::* ::number] [[_ & factors] b]
-  (let [[numbers factors] (moses number? factors)]
-    (list* '* (reduce * b numbers) factors)))
+  (let [[numbers factors] (moses number? factors)
+        number-prod (reduce * b numbers)]
+    (case number-prod
+      0 0
+      1 (apply mult factors)
+      (list* '* number-prod factors))))
 
 (defmethod mult' [::* ::*] [[_ & factors1] [_ & factors2]]
   (apply mult (concat factors1 factors2)))
@@ -179,7 +184,8 @@
 (defmethod pow' [::zero ::zero] [_ _] (assert false "Not defined"))
 (defmethod pow' [::any ::zero] [_ _] 1)
 (defmethod pow' [::zero ::any] [_ _] 0)
-(defmethod pow' :default [a b] (list 'pow a b))
+(defmethod pow' [::any ::one] [a _] a)
+(defmethod pow' [::any ::any] [a b] (list 'pow a b))
 
 
 ;; ----
@@ -279,8 +285,10 @@
 
 (defmethod quot&rem [::pow ::any] [[_ base p] other]
   (if (= base other)
-    (pow base (minus p 1))
+    [(pow base (minus p 1)) 0]
     (throw (ex-info "Can not reduce unexpected power" {:pow [base p] :divisor other}))))
+
+;; same for multiplications.
 
 (defmethod quot&rem [::any ::any] [a b]
   (if (= a b)
