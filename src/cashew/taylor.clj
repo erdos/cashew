@@ -8,7 +8,7 @@
   (seq [_] (list* '+ terms-seq))
   Object
   (toString [_] (str "<Taylor series of " limit ">"))
-  (equals [_ other] (= (.limit other) limit)))
+  (equals [_ other] (= (.limit ^TaylorSeries other) limit)))
 
 (ns-unmap *ns* 'map->TaylorSeries)
 (ns-unmap *ns* '->TaylorSeries)
@@ -33,10 +33,10 @@
                (pow x m)))
        (new TaylorSeries expr)))
 
-(defmethod plus' [TaylorSeries TaylorSeries] [a b]
+(defmethod plus' [TaylorSeries TaylorSeries] [^TaylorSeries a ^TaylorSeries b]
   (taylor (plus (.limit a) (.limit b))))
 
-(defmethod plus' [TaylorSeries ::c/any] [series other]
+(defmethod plus' [TaylorSeries ::c/any] [^TaylorSeries series other]
   (taylor (plus (.limit series) other)))
 
 (defmethod plus' [::c/any TaylorSeries] [a t] (plus t a))

@@ -43,6 +43,7 @@
            (quot&rem (coeffs->polynomial [(mult 'a 'a) 0 -1])
                      (coeffs->polynomial ['a -1]))))))
 
+;;  infinite loop it is.
 #_
 (deftest failing
   (println "> "

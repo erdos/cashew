@@ -3,15 +3,21 @@
 
 (declare coeffs->polynomial lead divide)
 
-(deftype Polynomial [factors variable]
+(deftype Polynomial [coeffs variable]
   clojure.lang.Seqable
   (seq [_] nil)
   Object
-  (toString [this] (str "<Polynomial of " (vec factors) " >"))
+  (toString [_] (str "<Polynomial of " (vec coeffs) " >"))
   (equals [_ other] (and (instance? Polynomial other)
-                         (= (.factors other) factors))))
+                         (= (.coeffs ^Polynomial other) coeffs))))
 
 (defn poly? [x] (instance? Polynomial x))
+
+(defn coefficients
+  "Returns the vector of coefficients of the polynomial."
+  [^Polynomial polynomial]
+  (assert (poly? polynomial))
+  (.coeffs polynomial))
 
 (derive Polynomial ::c/any)
 
@@ -19,24 +25,20 @@
 (ns-unmap *ns* 'map->Polynomial)
 (ns-unmap *ns* '->Polynomial)
 
-(defn degree [p]
+(defn degree [^Polynomial p]
   (if (instance? Polynomial p)
-    (dec (count (.factors p)))
-    (do (println "Degree of" p)
-        0)))
+    (dec (count (coefficients p)))
+    0))
 
-;; leading term. should give back variable as well
+;; leading term as polynomial
 (defn lead [p]
   (coeffs->polynomial
-   (cons (first (.factors p))
-         (repeat (degree p) 0)))
-  #_(apply mult
-           (first (.factors p))
-           (repeat (degree p) (.variable p))))
+   (cons (first (coefficients p))
+         (repeat (degree p) 0))))
 
 ;; 
 (defn divide-lead [p q]
-  (let [[main _] (quot&rem (first (.factors p)) (first (.factors q)))]
+  (let [[main _] (quot&rem (first (coefficients p)) (first (coefficients q)))]
     (coeffs->polynomial (cons main (repeat (- (degree p) (degree q)) 0)))))
 
 (defmethod quot&rem [Polynomial Polynomial] [n d]
@@ -51,27 +53,26 @@
       [q r])))
 
 ;; [3 4 1] -> 3x2 + 4x + 1
-(defn coeffs->polynomial [factors]
-;  (assert (not-empty factors))
-  (assert (not= 0 (first factors)))
-  (if (empty? factors)
+(defn coeffs->polynomial [coeffs]
+  (assert (not= 0 (first coeffs)))
+  (if (empty? coeffs)
     0
-    (new Polynomial factors 'x)))
+    (new Polynomial coeffs 'x)))
 
 ;; add them term-by-term
-(defmethod plus' [Polynomial Polynomial] [p q]
+(defmethod plus' [Polynomial Polynomial] [^Polynomial p ^Polynomial q]
   (assert (= (.variable p) (.variable q)))
   (->> (map plus
-            (concat (repeat (- (degree q) (degree p)) 0) (.factors p))
-            (concat (repeat (- (degree p) (degree q)) 0) (.factors q)))
+            (concat (repeat (- (degree q) (degree p)) 0) (coefficients p))
+            (concat (repeat (- (degree p) (degree q)) 0) (coefficients q)))
        (map canonize)
        (drop-while #{0})
        (coeffs->polynomial)))
 
 (defmethod mult' [Polynomial ::c/number] [p n]
-  (->> (.factors p)
+  (->> (coefficients p)
        (map (partial mult n))
-       (map canonize)
+       (map canonize) ;; maybe not necessary?
        (coeffs->polynomial)))
 
 ;; commutative
@@ -83,9 +84,13 @@
   (coeffs->polynomial
    (reduce (fn [v [idx value]] (update v idx plus value))
            (vec (repeat (+ 1 (degree p) (degree q)) 0))
-           (for [[idx1 fac1] (map-indexed vector (.factors p))
-                 [idx2 fac2] (map-indexed vector (.factors q))]
+           (for [[idx1 fac1] (map-indexed vector (coefficients p))
+                 [idx2 fac2] (map-indexed vector (coefficients q))]
              [(+ idx1 idx2) (mult fac1 fac2)]))))
 
 #_(defn polynomial [expression variable])
 
+;; compose polynomials
+(defn compose [outer inner] nil)
+
+;; differencialas!

@@ -19,7 +19,7 @@
 (defn wrap-dispatch [multimethod]
   (memoize
    (fn [dispatch-val]
-     (let [multimethod @(.v multimethod)
+     (let [multimethod @(.v ^clojure.lang.Var$Unbound multimethod)
            ps (prefers multimethod)
            candidates (cartesian (map (fn [e] (cons e (ancestors e))) dispatch-val))
            candidates (filter (methods multimethod) candidates)]
@@ -162,7 +162,7 @@
 (defmethod mult' [::* ::number] [[_ & factors] b]
   (let [[numbers factors] (moses number? factors)
         number-prod (reduce * b numbers)]
-    (case number-prod
+    (case (int number-prod)
       0 0
       1 (apply mult factors)
       (list* '* number-prod factors))))
@@ -294,8 +294,8 @@
 (defmethod quot&rem [::any ::any] [a b]
   (if (= a b)
     [1 0]
-    ;; [(list ::quot a b) (list ::rem a b)]
-    (throw (ex-info "Unexpected division" {:a a :b b
+     [(list ::quot a b) (list ::rem a b)]
+    #_(throw (ex-info "Unexpected division" {:a a :b b
                                            :at (dispatch a)
                                            :bt (dispatch b)}))))
 
