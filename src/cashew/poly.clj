@@ -42,7 +42,7 @@
     (coeffs->polynomial (cons main (repeat (- (degree p) (degree q)) 0)))))
 
 (defmethod quot&rem [Polynomial Polynomial] [n d]
-  (loop [q 0
+  (loop [q (identity 0) ;; needs to be unboxed for reflection warning
          r n]
     (if (and (not= r 0)
              (>= (degree r) (degree d)))
